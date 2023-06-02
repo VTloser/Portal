@@ -11,6 +11,9 @@ public class DemoControl : MonoBehaviour
     public GameObject B_Cam;
 
 
+    public GameObject Tag;
+
+
     private void Update()
     {
         Matrix4x4 matrix = B.transform.localToWorldMatrix * A.transform.worldToLocalMatrix * A_Cam.transform.localToWorldMatrix;
@@ -18,6 +21,7 @@ public class DemoControl : MonoBehaviour
 
 
 
+        Tag.transform.position = A_Cam.transform.localToWorldMatrix * Vector3.zero;
 
     }
 }
