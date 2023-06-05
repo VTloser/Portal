@@ -55,13 +55,14 @@ public class Portal : MonoBehaviour
         //如果看不到LinkedPortal.screen ，取消后续渲染提升性能
         if (!VisibleFromCamera(LinkedPortal.screen, playerCam))
         {
-            var testTexture = new Texture2D(1, 1);
-            testTexture.SetPixel(0, 0, Color.red);
-            testTexture.Apply();
-            LinkedPortal.screen.material.SetTexture("_MainTex", testTexture);
+            //测试用
+            //var testTexture = new Texture2D(1, 1);
+            //testTexture.SetPixel(0, 0, Color.red);
+            //testTexture.Apply();
+            //LinkedPortal.screen.material.SetTexture("_MainTex", testTexture);
             return;
         }
-        LinkedPortal.screen.material.SetTexture("_MainTex", viewTexture);
+        //LinkedPortal.screen.material.SetTexture("_MainTex", viewTexture);
         screen.enabled = false;  //渲染之前隐藏屏幕
         CreateViewTexture();  //创建ViewTexture
 
@@ -80,24 +81,40 @@ public class Portal : MonoBehaviour
     {
         ProtoectScreenFromClipping();
         SetNearClipPlane();
+        foreach (var traveller in trackedTravellers)
+        {
+            UpdateSliceParams(traveller);
+        }
     }
+
+
 
     private void LateUpdate()
     {
+        HandleTraveellers();
+    }
+
+
+    public void HandleTraveellers()
+    {
+
         for (int i = 0; i < trackedTravellers.Count; i++)
         {
             PortalTraveller traveller = trackedTravellers[i];
             Transform travellerT = traveller.transform;
-            Vector3 offsetFromPortal = travellerT.position - this.transform.position;
+            Matrix4x4 m = LinkedPortal.transform.localToWorldMatrix * this.transform.worldToLocalMatrix * traveller.transform.localToWorldMatrix;
 
+            Vector3 offsetFromPortal = travellerT.position - this.transform.position;
             int portalSide = System.Math.Sign(Vector3.Dot(offsetFromPortal, this.transform.forward));
             int portalSideOld = System.Math.Sign(Vector3.Dot(traveller.previousOffserFromPortal, this.transform.forward));
 
             if (portalSide != portalSideOld)
             {
-                Matrix4x4 m = LinkedPortal.transform.localToWorldMatrix * this.transform.worldToLocalMatrix * traveller.transform.localToWorldMatrix;
+                var positionOld = travellerT.position;
+                var rotOld = travellerT.rotation;
                 traveller.TelePort(this.transform, LinkedPortal.transform, m.GetColumn(3), m.rotation);
 
+                traveller.graphicsClone.transform.SetPositionAndRotation(positionOld, rotOld);
 
                 //不能依赖与OntriggerEnxit去调用下一帧
                 LinkedPortal.OnTravellerEnterPortal(traveller);
@@ -105,9 +122,15 @@ public class Portal : MonoBehaviour
                 i--;
             }
             else
+            {
+                traveller.graphicsClone.transform.SetPositionAndRotation(m.GetColumn(3), m.rotation);
                 traveller.previousOffserFromPortal = offsetFromPortal;
+            }               
         }
     }
+
+
+
 
 
     [SerializeField]
@@ -183,7 +206,7 @@ public class Portal : MonoBehaviour
     void UpdateSliceParams(PortalTraveller traveller)
     {
         //计算切片法线
-        int side = SideofPortal(traveller.transform.position);
+        int side = SideOfPortal(traveller.transform.position);
         Vector3 sliceNormal = this.transform.forward *- side;
         Vector3 cloneSliceNormal = LinkedPortal.transform.forward * side;
 
@@ -192,13 +215,37 @@ public class Portal : MonoBehaviour
         Vector3 cloneSlicePos = LinkedPortal.transform.position;
 
         //应用参数
-        for (int i = 0; i < traveller.originalMaterials.Length; i++)
+        for (int i = 0; i < traveller.OriginalMaterials.Length; i++)
         {
-            traveller.originalMaterials[i].Set
+            traveller.OriginalMaterials[i].SetVector("sliceCentre", slicePos);
+            traveller.OriginalMaterials[i].SetVector("sliceNormal", sliceNormal);
+
+            traveller.CloneMaterials[i].SetVector("sliceCentre", cloneSlicePos);
+            traveller.CloneMaterials[i].SetVector("sliceNormal", cloneSliceNormal);
         }
 
     }
 
 
+
+
+
+    int SideOfPortal(Vector3 pos)
+    {
+        return System.Math.Sign(Vector3.Dot(pos - transform.position, transform.forward));
+    }
+
+    bool SameSideOfPortal(Vector3 posA, Vector3 posB)
+    {
+        return SideOfPortal(posA) == SideOfPortal(posB);
+    }
+
+    Vector3 portalCamPos
+    {
+        get
+        {
+            return portalCam.transform.position;
+        }
+    }
 
 }

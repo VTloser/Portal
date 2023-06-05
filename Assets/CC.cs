@@ -20,25 +20,25 @@ public class CC : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Matrix4x4 m = Player_Door.worldToLocalMatrix * Portal_Door.localToWorldMatrix * PlayCam.localToWorldMatrix;
+        Matrix4x4 m = Portal_Door.localToWorldMatrix * Player_Door.worldToLocalMatrix * PlayCam.localToWorldMatrix;
         Portal_Cam.SetPositionAndRotation(m.GetColumn(3), m.rotation);
 
 
-        if (viewTexture == null || viewTexture.width != Screen.width || viewTexture.height != Screen.height)
-        {
-            if (viewTexture != null)
-            {
-                viewTexture.Release();
-            }
-            //viewTexture = new RenderTexture(Screen.width, Screen.height, 0);
+        //if (viewTexture == null || viewTexture.width != Screen.width || viewTexture.height != Screen.height)
+        //{
+        //    if (viewTexture != null)
+        //    {
+        //        viewTexture.Release();
+        //    }
+        //    //viewTexture = new RenderTexture(Screen.width, Screen.height, 0);
 
 
-        }
+        //}
 
 
-        Portal_Cam.GetComponent<Camera>().targetTexture = viewTexture;
+        //Portal_Cam.GetComponent<Camera>().targetTexture = viewTexture;
 
-        Player_scene.material.SetTexture("_MainTex", viewTexture);
+        //Player_scene.material.SetTexture("_MainTex", viewTexture);
 
 
     }
